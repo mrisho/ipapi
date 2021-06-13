@@ -1,0 +1,100 @@
+<html>
+
+<head>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+
+        let ips = [];
+        let tableRows = [];
+        let myHtml = "";
+
+
+        let myExportString = "";
+
+        $(function () {
+            $('#mytable').click(() => {
+                myHtml = "<table id='iptable'>";
+                myHtml += "<tr><td>Ip Address</td><td>Country</td><td>Region</td><td>City</td></tr>";
+                myExportString += "Ip Address\tCountry\tRegion\tCity\r\n";
+
+                tableRows.forEach(r => {
+                    myHtml += `<tr><td>${r.ip}</td><td>${r.country_name}</td><td>${r.region}</td><td>${r.city}</td></tr>`;
+                    myExportString += `${r.ip}\t${r.country_name}\t${r.region}\t${r.city}\r\n`;
+                });
+
+                myHtml += "</table>";
+                $('#mytable').html(myHtml);
+                $('#exportDiv').html(myExportString);
+                window.open('data:application/vnd.ms-excel,' + encodeURIComponent($('#exportDiv').html()));
+
+            });
+
+
+            $("#upload").on("click", function () {
+                var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+                if (regex.test($("#fileUpload").val().toLowerCase())) {
+                    if (typeof (FileReader) != "undefined") {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+
+                            let rows = e.target.result.split("\r\n");
+                            let len = rows.length;
+                            let count = 0;
+                           
+                            for (var i = 0; i < rows.length; i++) {
+
+                                var cells = rows[i].split(",");
+        
+                                $.get(`https://ipapi.co/${cells[0]}/json/`, function (data) {
+                                    count++;
+                                    tableRows.push(data);
+
+                                    if (count === len) {
+                                        $('#mytable').trigger('click');
+
+                                    }
+                                });
+
+
+                            }
+
+
+                        }
+                        reader.readAsText($("#fileUpload")[0].files[0]);
+
+
+                    } else {
+                        alert("This browser does not support HTML5.");
+                    }
+                } else {
+                    alert("Please upload a valid CSV file.");
+                }
+            });
+
+
+        });
+
+
+
+
+    </script>
+
+</head>
+
+<body>
+    <input type="file" id="fileUpload" />
+    <input type="button" id="upload" value="Upload" />
+    <div id='exportDiv' style="visibility:hidden;"></div>
+    <div id='mytable'>
+
+    </div>
+</body>
+
+</html>
